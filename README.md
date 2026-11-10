@@ -29,14 +29,14 @@ Mega Man Battle Network Legacy Collection Vol. 2 (Nintendo Switch, 0100734016266
 
 ### 스위치 (Atmosphere)
 
-1. `MMBNLC2_KR_v0.9.0_atmosphere.zip` 을 SD 카드 루트에 풉니다.
+1. `MMBNLC2_KR_v0.9.1_atmosphere.zip` 을 SD 카드 루트에 풉니다.
    - `atmosphere/contents/0100734016266000/romfs/...`
    - `atmosphere/exefs_patches/MMBNLC2_KoreanPatch/A736E99122555BA730FD42DE3A2E3E562BEAD44E.ips`
 2. 본체 **시스템 언어를 「繁體中文」** 으로 둡니다(컬렉션은 시스템 언어로 표시 언어를 정합니다).
 
 ### 에뮬레이터 (Eden / yuzu 계열, Ryujinx)
 
-1. `MMBNLC2_KR_v0.9.0_emulator.zip` 을 풀면 `KoreanPatch/` 폴더가 나옵니다.
+1. `MMBNLC2_KR_v0.9.1_emulator.zip` 을 풀면 `KoreanPatch/` 폴더가 나옵니다.
 2. 게임 우클릭 → 모드 폴더 열기(Open Mod Data Location)에 `KoreanPatch` 폴더째 넣습니다.
    - Eden/yuzu: `load/0100734016266000/KoreanPatch/{romfs,exefs}`
    - Ryujinx: `mods/contents/0100734016266000/KoreanPatch/{romfs,exefs}`

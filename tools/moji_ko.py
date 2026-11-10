@@ -25,6 +25,10 @@ FONT = FONTS / 'SCDream4.otf'
 FALLBACK = Path(r'C:\Windows\Fonts\malgun.ttf')
 # 한글 글리프 상자(글꼴 단위, 셀 54x54). 번체 「太」 상자와 같은 크기
 BOX = (2.5, 11.0, 39.0, 49.0)
+# 아틀라스 칸: 이보다 작으면 옮긴다(번체 한자 칸 중앙값 114x38), 옮길 칸 크기, 칸 사이 간격(px, 짝수 = fp16 정확)
+MIN_CELL = (114, 38)
+CELL = (116, 40)
+GAP = 6
 
 
 def _draw(ch, font, w, h, ss=4):
@@ -64,6 +68,23 @@ def patch(src, dst, codes, new, keep):
     for c, u in enumerate(f.codes):
         users[f.glyph_of(u)].add(c)
     atlas = f.atlas()
+    # 아틀라스 칸은 원래 한자의 잉크 상자 크기다(「一」은 100x4). 작은 칸에 한글을 그리면 화면에서 늘어나 흐려진다
+    # → 표준 칸(CELL)보다 작은 칸은 아틀라스 아래 빈 영역의 표준 칸으로 옮긴다(UV 만 바꿈).
+    free_y = -(-max(f.rect(i)[3] for i in range(3, f.n_glyph)) // 4) * 4 + 8
+    if atlas[free_y:, :, 3].any():
+        raise ValueError(f'아틀라스 {free_y} 아래가 비어 있지 않다')
+    slot = [0]
+    cols = (f.page_w - GAP) // (CELL[0] + GAP)
+
+    def new_cell():
+        i = slot[0]
+        slot[0] += 1
+        x = GAP + (i % cols) * (CELL[0] + GAP)
+        y = free_y + (i // cols) * (CELL[1] + GAP)
+        if y + CELL[1] > f.page_h:
+            raise ValueError(f'아틀라스 빈 영역 부족({i}칸째)')
+        return x, y, x + CELL[0], y + CELL[1]
+
     done = 0
     for ch in new:
         c = codes[ch]
@@ -75,6 +96,17 @@ def patch(src, dst, codes, new, keep):
         if users[g] - {c}:
             raise ValueError(f'{ch}: 글리프 {g} 를 다른 코드 {sorted(users[g] - {c})[:3]} 도 쓴다')
         x0, y0, x1, y1 = f.rect(g)
+        if x1 - x0 < MIN_CELL[0] or y1 - y0 < MIN_CELL[1]:
+            if f.glyphs[g][0] != 1:
+                raise ValueError(f'{ch}: 글리프 {g} 가 1번 장이 아니다')
+            atlas[y0:y1, x0:x1, 3] = 0
+            x0, y0, x1, y1 = new_cell()
+            top, h = f.pages[1]
+            uv = (x0 / f.page_w, (y0 - top) / h, x1 / f.page_w, (y1 - top) / h)
+            struct.pack_into('<4e', f.raw, f.rec_off + 20 * g + 10, *uv)
+            f.glyphs[g] = f.glyphs[g][:6] + uv + f.glyphs[g][10:]
+            if f.rect(g) != (x0, y0, x1, y1):
+                raise ValueError(f'{ch}: fp16 UV 가 칸 좌표를 정확히 못 담는다 {f.rect(g)}')
         a = render(ch, x1 - x0, y1 - y0)
         cell = np.zeros((y1 - y0, x1 - x0, 4), np.uint8)
         cell[:, :, :3] = 255
