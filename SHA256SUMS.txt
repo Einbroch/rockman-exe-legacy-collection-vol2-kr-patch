@@ -1,0 +1,2 @@
+b37f88f5b72eb649a61f106d8f07416c4e62d5394820a24e8fcf7100a4749adf  MMBNLC2_KR_v0.9.0_atmosphere.zip
+d6a493b61943c358ca35dcedb254a9eb9bd3ebb90fdf22aa606847446a408fcb  MMBNLC2_KR_v0.9.0_emulator.zip
